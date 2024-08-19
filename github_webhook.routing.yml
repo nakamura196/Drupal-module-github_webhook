@@ -1,0 +1,8 @@
+# github_webhook.routing.yml
+github_webhook.settings:
+  path: '/admin/config/github_webhook'
+  defaults:
+    _form: '\Drupal\github_webhook\Form\SettingsForm'
+    _title: 'GitHub Webhook Settings'
+  requirements:
+    _permission: 'administer site configuration'

@@ -1,0 +1,6 @@
+github_webhook.admin:
+  title: 'GitHub Webhook Settings'
+  route_name: github_webhook.settings
+  description: 'Configure GitHub Webhook'
+  parent: system.admin_config_services
+  weight: 100
