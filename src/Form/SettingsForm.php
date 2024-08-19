@@ -29,7 +29,7 @@ class SettingsForm extends ConfigFormBase
   public function buildForm(array $form, FormStateInterface $form_state)
   {
     $config = $this->config("github_webhook.settings");
-    $repos = $config->get("repositories");
+    $repos = $config->get("repositories") ?? [];
 
     // Gather the number of rows in the form already.
     $row_count = $form_state->get("row_count");
