@@ -233,7 +233,7 @@ class SettingsForm extends ConfigFormBase
     for ($row_no = 0; $row_no < $row_count; $row_no++) {
       $is_active_row = $form_state->get("row_" . $row_no . "_active");
       if ($is_active_row) {
-        $repos[] = [
+        $current_repo = [
           "owner" => $form_state->getValue([
             "repositories",
             "repo" . $row_no,
@@ -246,12 +246,6 @@ class SettingsForm extends ConfigFormBase
             $row_no,
             "repo",
           ]),
-          "github_token" => $form_state->getValue([
-            "repositories",
-            "repo" . $row_no,
-            $row_no,
-            "github_token",
-          ]),
           "event_type" => $form_state->getValue([
             "repositories",
             "repo" . $row_no,
@@ -259,6 +253,26 @@ class SettingsForm extends ConfigFormBase
             "event_type",
           ]),
         ];
+
+        $github_token = $form_state->getValue([
+          "repositories",
+          "repo" . $row_no,
+          $row_no,
+          "github_token",
+        ]);
+
+        // Check if the token was entered, otherwise use the existing one.
+        if (!empty($github_token)) {
+          $current_repo["github_token"] = $github_token;
+        } else {
+          // Retrieve the existing token if the new one is empty.
+          $existing_config = $this->config('github_webhook.settings')->get('repositories');
+          $current_repo["github_token"] = isset($existing_config[$row_no]["github_token"])
+              ? $existing_config[$row_no]["github_token"]
+              : "";
+        }
+
+        $repos[] = $current_repo;
       }
     }
 
