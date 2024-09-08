@@ -1,0 +1,4 @@
+access github webhook settings:
+  title: 'Access GitHub Webhook Settings'
+  description: 'Allows users to access and modify GitHub Webhook settings'
+  restrict access: TRUE

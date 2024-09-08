@@ -5,4 +5,4 @@ github_webhook.settings:
     _form: '\Drupal\github_webhook\Form\SettingsForm'
     _title: 'GitHub Webhook Settings'
   requirements:
-    _permission: 'administer site configuration'
+    _permission: 'access github webhook settings'
