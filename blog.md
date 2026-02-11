@@ -322,6 +322,21 @@ HTTP クライアントも `\Drupal::httpClient()` に変更し、Drupal のサ�
 
 管理者にはワークフロー実行の GitHub URL がリンクとして表示され、一般ユーザーにはテキストのみが表示されます。
 
+### サブディレクトリ配下での運用
+
+Drupal がサブディレクトリ（例: `https://example.com/cms/`）で運用されている場合、ステータス API のパスもサブディレクトリを含む必要があります。当初は `/github-webhook/api/status` とハードコードしていましたが、これではサブディレクトリ配下で動作しません。
+
+Drupal の URL ジェネレーターを使い、ルートからベース URL を動的に生成するようにしました。
+
+```php
+$status_url = \Drupal\Core\Url::fromRoute('github_webhook.status', ['repo_index' => 0])->toString();
+$status_base_url = preg_replace('#/0$#', '', $status_url);
+```
+
+これにより、`/cms/github-webhook/api/status` のようなサブディレクトリ付きパスが正しく生成されます。
+
+なお、ルートのパラメータ `repo_index` に `\d+` の制約があるため、プレースホルダに文字列を渡すとエラーになります。数値 `0` を渡してベース URL を構築し、末尾の `/0` を削除する方法で対応しています。
+
 ### 注意点: トリガーしたランの特定
 
 `repository_dispatch` API は HTTP 204 (No Content) を返すため、トリガーされたワークフローの Run ID を直接取得できません。そのため、`event=repository_dispatch` でフィルタした最近の実行一覧を表示するアプローチを取っています。
@@ -414,6 +429,28 @@ msgstr "@repository の GitHub Webhook を正常にトリガーしました。"
 ```
 
 JavaScript 側の文字列も `Drupal.t()` を使用しているため、Drupal の翻訳システムで管理できます。
+
+### 翻訳ファイルの自動インポート
+
+Drupal はカスタムモジュールの `translations/` ディレクトリにある `.po` ファイルを自動的にはインポートしません。`info.yml` に `interface translation server pattern` を記述する方法もありますが、モジュールの配置パス（`modules/custom/` や `modules/contrib/` など）をハードコーディングする必要があり、環境によって動作しない問題があります。
+
+そこで `hook_locale_translation_projects_alter()` を使い、モジュールのパスを動的に解決するようにしました。
+
+```php
+// github_webhook.module
+function github_webhook_locale_translation_projects_alter(&$projects) {
+  $module_handler = \Drupal::service('module_handler');
+  $module_path = $module_handler->getModule('github_webhook')->getPath();
+  $projects['github_webhook'] = [
+    'info' => [
+      'interface translation project' => 'github_webhook',
+      'interface translation server pattern' => $module_path . '/translations/%language.po',
+    ],
+  ];
+}
+```
+
+これにより、モジュールがどのディレクトリに配置されていても、翻訳ファイルが自動的にインポートされます。Drupal の管理画面で日本語を追加するだけで UI が翻訳されます。
 
 ## 10. 開発環境（Docker）
 
