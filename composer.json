@@ -1,0 +1,13 @@
+{
+  "name": "drupal/github_webhook",
+  "description": "Trigger GitHub repository_dispatch events from the Drupal admin UI.",
+  "type": "drupal-module",
+  "license": "Apache-2.0",
+  "require": {
+    "drupal/core": "^10 || ^11",
+    "php": ">=8.3"
+  },
+  "suggest": {
+    "drupal/key": "For secure token storage via environment variables, files, or external services (e.g., HashiCorp Vault)."
+  }
+}

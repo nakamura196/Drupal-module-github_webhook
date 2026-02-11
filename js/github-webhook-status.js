@@ -1,0 +1,156 @@
+(function (Drupal, drupalSettings) {
+  'use strict';
+
+  var POLL_INTERVAL = 5000;
+  var RETRY_INTERVAL = 3000;
+  var MAX_RETRIES = 4;
+  var pollTimer = null;
+  var retryCount = 0;
+
+  function fetchStatus(repoIndex, container) {
+    var url = drupalSettings.github_webhook.status_base_url + '/' + repoIndex;
+
+    fetch(url)
+      .then(function (response) { return response.json(); })
+      .then(function (data) {
+        renderStatus(container, data);
+
+        var hasActive = data.runs && data.runs.some(function (run) {
+          return run.status === 'queued' || run.status === 'in_progress';
+        });
+
+        if (hasActive) {
+          // Active runs found — keep polling.
+          retryCount = 0;
+          pollTimer = setTimeout(function () {
+            fetchStatus(repoIndex, container);
+          }, POLL_INTERVAL);
+        } else if (retryCount < MAX_RETRIES) {
+          // No active runs yet — retry a few times (new run may not be registered yet).
+          retryCount++;
+          pollTimer = setTimeout(function () {
+            fetchStatus(repoIndex, container);
+          }, RETRY_INTERVAL);
+        }
+      })
+      .catch(function () {
+        container.innerHTML = '<p>' + Drupal.t('Failed to load workflow status.') + '</p>';
+      });
+  }
+
+  function renderStatus(container, data) {
+    if (!data.runs || data.runs.length === 0) {
+      container.innerHTML = '<p>' + Drupal.t('No recent workflow runs.') + '</p>';
+      return;
+    }
+
+    var isAdmin = drupalSettings.github_webhook.is_admin;
+
+    var html = '<h3>' + Drupal.t('Recent Workflow Runs') + '</h3>';
+    html += '<table class="github-webhook-runs"><thead><tr>';
+    html += '<th>' + Drupal.t('Status') + '</th>';
+    html += '<th>' + Drupal.t('Started') + '</th>';
+    html += '<th>' + Drupal.t('Duration') + '</th>';
+    html += '</tr></thead><tbody>';
+
+    data.runs.forEach(function (run) {
+      var statusClass = getStatusClass(run);
+      var statusLabel = getStatusLabel(run);
+      var timeAgo = getTimeAgo(new Date(run.created_at));
+      var duration = getDuration(run);
+
+      html += '<tr class="' + statusClass + '">';
+      html += '<td><span class="status-indicator"></span> ';
+      if (isAdmin && run.html_url) {
+        html += '<a href="' + run.html_url + '" target="_blank">' + statusLabel + '</a>';
+      } else {
+        html += statusLabel;
+      }
+      html += '</td>';
+      html += '<td>' + timeAgo + '</td>';
+      html += '<td>' + duration + '</td>';
+      html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  }
+
+  function getStatusClass(run) {
+    if (run.status === 'queued') return 'run-queued';
+    if (run.status === 'in_progress') return 'run-in-progress';
+    if (run.status === 'completed') {
+      if (run.conclusion === 'success') return 'run-success';
+      if (run.conclusion === 'failure') return 'run-failure';
+      if (run.conclusion === 'cancelled') return 'run-cancelled';
+    }
+    return 'run-unknown';
+  }
+
+  function getStatusLabel(run) {
+    if (run.status === 'queued') return Drupal.t('Queued');
+    if (run.status === 'in_progress') return Drupal.t('In progress');
+    if (run.status === 'completed') {
+      if (run.conclusion === 'success') return Drupal.t('Success');
+      if (run.conclusion === 'failure') return Drupal.t('Failed');
+      if (run.conclusion === 'cancelled') return Drupal.t('Cancelled');
+      return run.conclusion || Drupal.t('Completed');
+    }
+    return run.status;
+  }
+
+  function getTimeAgo(date) {
+    var seconds = Math.floor((new Date() - date) / 1000);
+    if (seconds < 60) return Drupal.t('Just now');
+    var minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return Drupal.t('@count min ago', { '@count': minutes });
+    var hours = Math.floor(minutes / 60);
+    if (hours < 24) return Drupal.t('@count hr ago', { '@count': hours });
+    var days = Math.floor(hours / 24);
+    return Drupal.t('@count days ago', { '@count': days });
+  }
+
+  function getDuration(run) {
+    var start = new Date(run.created_at);
+    var end = run.status === 'completed' ? new Date(run.updated_at) : new Date();
+    var seconds = Math.floor((end - start) / 1000);
+    if (seconds < 60) return seconds + 's';
+    var minutes = Math.floor(seconds / 60);
+    var secs = seconds % 60;
+    if (minutes < 60) return minutes + 'm ' + secs + 's';
+    var hours = Math.floor(minutes / 60);
+    minutes = minutes % 60;
+    return hours + 'h ' + minutes + 'm';
+  }
+
+  Drupal.behaviors.githubWebhookStatus = {
+    attach: function (context) {
+      var container = context.querySelector
+        ? context.querySelector('#github-webhook-status')
+        : null;
+      if (!container || container.dataset.processed) return;
+      container.dataset.processed = 'true';
+
+      var select = document.querySelector('[name="select_repo"]');
+      if (!select) return;
+
+      function loadStatus() {
+        if (pollTimer) clearTimeout(pollTimer);
+        retryCount = 0;
+        var val = select.value;
+        if (val !== '') {
+          fetchStatus(val, container);
+        } else {
+          container.innerHTML = '';
+        }
+      }
+
+      // Load on page ready.
+      loadStatus();
+
+      // Reload on select change.
+      select.addEventListener('change', loadStatus);
+    }
+  };
+
+})(Drupal, drupalSettings);

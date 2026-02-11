@@ -1,3 +1,8 @@
-access github webhook settings:
-  title: 'Access GitHub Webhook Settings'
-  description: 'Allow users to access GitHub webhook configuration.'
+administer github webhook:
+  title: 'Administer GitHub Webhook'
+  description: 'Configure repositories, tokens, and auto-trigger settings.'
+  restrict access: true
+
+trigger github webhook:
+  title: 'Trigger GitHub Webhook'
+  description: 'Trigger repository_dispatch webhooks.'

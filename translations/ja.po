@@ -1,0 +1,213 @@
+# Japanese translation for GitHub Webhook module.
+# Copyright (c) GitHub Webhook contributors.
+# This file is distributed under the same license as the GitHub Webhook module.
+msgid ""
+msgstr ""
+"Project-Id-Version: github_webhook\n"
+"POT-Creation-Date: 2026-02-11\n"
+"PO-Revision-Date: 2026-02-11\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+# --- Routing / Tab / Menu titles ---
+
+msgid "GitHub Webhook"
+msgstr "GitHub Webhook"
+
+msgid "Trigger Webhook"
+msgstr "Webhook をトリガー"
+
+msgid "Repositories"
+msgstr "リポジトリ"
+
+msgid "Auto Trigger"
+msgstr "自動トリガー"
+
+msgid "Trigger"
+msgstr "トリガー"
+
+# --- Permissions ---
+
+msgid "Administer GitHub Webhook"
+msgstr "GitHub Webhook の管理"
+
+msgid "Configure repositories, tokens, and auto-trigger settings."
+msgstr "リポジトリ、トークン、自動トリガーの設定を変更します。"
+
+msgid "Trigger GitHub Webhook"
+msgstr "GitHub Webhook のトリガー"
+
+msgid "Trigger repository_dispatch webhooks."
+msgstr "repository_dispatch Webhook をトリガーします。"
+
+# --- TriggerForm ---
+
+msgid "Select Repository"
+msgstr "リポジトリを選択"
+
+msgid "- Select a repository -"
+msgstr "- リポジトリを選択 -"
+
+msgid "No repositories configured. <a href=\":url\">Add repositories</a> first."
+msgstr "リポジトリが設定されていません。先に<a href=\":url\">リポジトリを追加</a>してください。"
+
+msgid "No repository selected. Please select a repository."
+msgstr "リポジトリが選択されていません。リポジトリを選択してください。"
+
+msgid "GitHub webhook triggered successfully for @repository. <a href=\":url\" target=\"_blank\">View Actions</a>"
+msgstr "@repository の GitHub Webhook を正常にトリガーしました。<a href=\":url\" target=\"_blank\">Actions を確認</a>"
+
+msgid "Failed to trigger GitHub webhook for @repository. Please contact an administrator."
+msgstr "@repository の GitHub Webhook のトリガーに失敗しました。管理者にお問い合わせください。"
+
+msgid "No repositories configured."
+msgstr "リポジトリが設定されていません。"
+
+# --- SettingsForm ---
+
+msgid "Repository @row"
+msgstr "リポジトリ @row"
+
+msgid "Owner"
+msgstr "オーナー"
+
+msgid "Enter the owner of the GitHub repository."
+msgstr "GitHub リポジトリのオーナーを入力してください。"
+
+msgid "Repo"
+msgstr "リポジトリ"
+
+msgid "Enter the name of the GitHub repository."
+msgstr "GitHub リポジトリ名を入力してください。"
+
+msgid "Token Source"
+msgstr "トークンソース"
+
+msgid "Manual input"
+msgstr "手動入力"
+
+msgid "Key module"
+msgstr "Key モジュール"
+
+msgid "Choose how to provide the GitHub token."
+msgstr "GitHub トークンの提供方法を選択してください。"
+
+msgid "GitHub Token"
+msgstr "GitHub トークン"
+
+msgid "A token is already saved. Leave blank to keep the current token."
+msgstr "トークンは保存済みです。現在のトークンを維持する場合は空欄のままにしてください。"
+
+msgid "Enter your GitHub personal access token. A fine-grained token with minimal permissions is recommended."
+msgstr "GitHub パーソナルアクセストークンを入力してください。最小限の権限を持つ Fine-grained トークンの使用を推奨します。"
+
+msgid "Key"
+msgstr "キー"
+
+msgid "- Select a key -"
+msgstr "- キーを選択 -"
+
+msgid "Select a key that contains the GitHub token."
+msgstr "GitHub トークンを含むキーを選択してください。"
+
+msgid "Event Type"
+msgstr "イベントタイプ"
+
+msgid "Enter the event type to trigger the webhook."
+msgstr "Webhook をトリガーするイベントタイプを入力してください。"
+
+msgid "Workflow File"
+msgstr "ワークフローファイル"
+
+msgid "Optional. The workflow filename (e.g. deploy.yml) to filter status display. Leave blank to show all repository_dispatch runs."
+msgstr "任意。ステータス表示を絞り込むワークフローファイル名（例: deploy.yml）。空欄の場合はすべての repository_dispatch 実行を表示します。"
+
+msgid "Remove repository"
+msgstr "リポジトリを削除"
+
+msgid "Add repository"
+msgstr "リポジトリを追加"
+
+msgid "Submit"
+msgstr "保存"
+
+# --- AutoTriggerForm ---
+
+msgid "Enable Auto Trigger"
+msgstr "自動トリガーを有効化"
+
+msgid "Automatically trigger webhooks when content is saved."
+msgstr "コンテンツの保存時に自動的に Webhook をトリガーします。"
+
+msgid "Content Types"
+msgstr "コンテンツタイプ"
+
+msgid "Select content types that will trigger webhooks on save."
+msgstr "保存時に Webhook をトリガーするコンテンツタイプを選択してください。"
+
+msgid "Select repositories to trigger when content is saved."
+msgstr "コンテンツの保存時にトリガーするリポジトリを選択してください。"
+
+# --- Menu / Description ---
+
+msgid "Trigger GitHub repository_dispatch webhooks."
+msgstr "GitHub の repository_dispatch Webhook をトリガーします。"
+
+# --- Status display ---
+
+msgid "Loading workflow status..."
+msgstr "ワークフローの状態を読み込み中..."
+
+msgid "Failed to load workflow status."
+msgstr "ワークフローの状態の読み込みに失敗しました。"
+
+msgid "No recent workflow runs."
+msgstr "最近のワークフロー実行はありません。"
+
+msgid "Recent Workflow Runs"
+msgstr "最近のワークフロー実行"
+
+msgid "Status"
+msgstr "ステータス"
+
+msgid "Started"
+msgstr "開始"
+
+msgid "Duration"
+msgstr "所要時間"
+
+msgid "Queued"
+msgstr "待機中"
+
+msgid "In progress"
+msgstr "実行中"
+
+msgid "Success"
+msgstr "成功"
+
+msgid "Failed"
+msgstr "失敗"
+
+msgid "Cancelled"
+msgstr "キャンセル"
+
+msgid "Completed"
+msgstr "完了"
+
+msgid "Just now"
+msgstr "たった今"
+
+msgid "@count min ago"
+msgstr "@count 分前"
+
+msgid "@count hr ago"
+msgstr "@count 時間前"
+
+msgid "@count days ago"
+msgstr "@count 日前"
+
+msgid "GitHub webhook triggered successfully for @repository."
+msgstr "@repository の GitHub Webhook を正常にトリガーしました。"

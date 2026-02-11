@@ -1,5 +1,6 @@
 name: 'GitHub Webhook'
-description: 'A module to send POST request to GitHub when a button is clicked.'
+description: 'Trigger GitHub repository_dispatch events from the Drupal admin UI.'
 package: Custom
 type: module
-core_version_requirement: ^10
+core_version_requirement: ^10 || ^11
+php: 8.3

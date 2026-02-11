@@ -1,0 +1,32 @@
+services:
+  drupal:
+    build: .
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/opt/drupal/web/modules/custom/github_webhook
+      - drupal_data:/opt/drupal/web/sites/default/files
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: mariadb:11
+    environment:
+      MARIADB_DATABASE: drupal
+      MARIADB_USER: drupal
+      MARIADB_PASSWORD: drupal
+      MARIADB_ROOT_PASSWORD: root
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  drupal_data:
+  db_data:

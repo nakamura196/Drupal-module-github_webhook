@@ -1,0 +1,85 @@
+<?php
+
+/**
+ * @file
+ * Hook implementations for the GitHub Webhook module.
+ */
+
+use Drupal\Core\Entity\EntityInterface;
+
+/**
+ * Implements hook_entity_insert().
+ */
+function github_webhook_entity_insert(EntityInterface $entity) {
+  _github_webhook_auto_trigger($entity);
+}
+
+/**
+ * Implements hook_entity_update().
+ */
+function github_webhook_entity_update(EntityInterface $entity) {
+  _github_webhook_auto_trigger($entity);
+}
+
+/**
+ * Triggers webhooks automatically when a node of a configured type is saved.
+ *
+ * @param \Drupal\Core\Entity\EntityInterface $entity
+ *   The entity being saved.
+ */
+function _github_webhook_auto_trigger(EntityInterface $entity) {
+  // Only act on node entities.
+  if ($entity->getEntityTypeId() !== 'node') {
+    return;
+  }
+
+  $config = \Drupal::config('github_webhook.settings');
+
+  // Check if auto trigger is enabled.
+  if (!$config->get('auto_trigger_enabled')) {
+    return;
+  }
+
+  // Check if this content type is configured for auto trigger.
+  $content_types = $config->get('auto_trigger_content_types') ?? [];
+  $bundle = $entity->bundle();
+  if (!in_array($bundle, $content_types)) {
+    return;
+  }
+
+  // Get the target repositories.
+  $auto_trigger_repos = $config->get('auto_trigger_repositories') ?? [];
+  $repositories = $config->get('repositories') ?? [];
+
+  if (empty($auto_trigger_repos) || empty($repositories)) {
+    return;
+  }
+
+  /** @var \Drupal\github_webhook\Service\WebhookTriggerService $trigger_service */
+  $trigger_service = \Drupal::service('github_webhook.trigger');
+
+  foreach ($auto_trigger_repos as $repo_index) {
+    if (!isset($repositories[$repo_index])) {
+      continue;
+    }
+
+    $repository = $repositories[$repo_index];
+    $label = $repository['owner'] . '/' . $repository['repo'];
+
+    $success = $trigger_service->triggerRepository($repository);
+    if ($success) {
+      \Drupal::logger('github_webhook')->info('Auto-triggered webhook for @repository on @bundle node "@title".', [
+        '@repository' => $label,
+        '@bundle' => $bundle,
+        '@title' => $entity->label(),
+      ]);
+    }
+    else {
+      \Drupal::logger('github_webhook')->error('Failed to auto-trigger webhook for @repository on @bundle node "@title".', [
+        '@repository' => $label,
+        '@bundle' => $bundle,
+        '@title' => $entity->label(),
+      ]);
+    }
+  }
+}

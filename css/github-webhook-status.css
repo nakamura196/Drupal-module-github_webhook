@@ -1,0 +1,70 @@
+.github-webhook-status {
+  margin-top: 2em;
+}
+
+.github-webhook-runs {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5em;
+}
+
+.github-webhook-runs th,
+.github-webhook-runs td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid #d3d8de;
+}
+
+.github-webhook-runs th {
+  font-weight: 600;
+  color: #555;
+  font-size: 0.9em;
+}
+
+.status-indicator {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.run-queued .status-indicator {
+  background-color: #dbab09;
+}
+
+.run-in-progress .status-indicator {
+  background-color: #0366d6;
+  animation: github-webhook-pulse 1.5s ease-in-out infinite;
+}
+
+.run-success .status-indicator {
+  background-color: #28a745;
+}
+
+.run-failure .status-indicator {
+  background-color: #cb2431;
+}
+
+.run-cancelled .status-indicator {
+  background-color: #959da5;
+}
+
+.run-unknown .status-indicator {
+  background-color: #959da5;
+}
+
+.github-webhook-runs a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.github-webhook-runs a:hover {
+  text-decoration: underline;
+}
+
+@keyframes github-webhook-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}

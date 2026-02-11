@@ -1,0 +1,9 @@
+status:
+  js:
+    js/github-webhook-status.js: {}
+  css:
+    component:
+      css/github-webhook-status.css: {}
+  dependencies:
+    - core/drupal
+    - core/drupalSettings

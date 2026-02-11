@@ -1,0 +1,47 @@
+github_webhook.settings:
+  type: config_object
+  label: 'GitHub Webhook settings'
+  mapping:
+    repositories:
+      type: sequence
+      label: 'Repositories'
+      sequence:
+        type: mapping
+        label: 'Repository'
+        mapping:
+          owner:
+            type: string
+            label: 'Owner'
+          repo:
+            type: string
+            label: 'Repository name'
+          event_type:
+            type: string
+            label: 'Event type'
+          token_source:
+            type: string
+            label: 'Token source'
+          github_token:
+            type: string
+            label: 'GitHub token'
+          token_key:
+            type: string
+            label: 'Key module key ID'
+          workflow_file:
+            type: string
+            label: 'Workflow file'
+    auto_trigger_enabled:
+      type: boolean
+      label: 'Auto trigger enabled'
+    auto_trigger_content_types:
+      type: sequence
+      label: 'Auto trigger content types'
+      sequence:
+        type: string
+        label: 'Content type'
+    auto_trigger_repositories:
+      type: sequence
+      label: 'Auto trigger repositories'
+      sequence:
+        type: integer
+        label: 'Repository index'
