@@ -8,6 +8,23 @@
 use Drupal\Core\Entity\EntityInterface;
 
 /**
+ * Implements hook_locale_translation_projects_alter().
+ *
+ * Registers this module's local translation files so Drupal can
+ * automatically import them regardless of the module's install path.
+ */
+function github_webhook_locale_translation_projects_alter(&$projects) {
+  $module_handler = \Drupal::service('module_handler');
+  $module_path = $module_handler->getModule('github_webhook')->getPath();
+  $projects['github_webhook'] = [
+    'info' => [
+      'interface translation project' => 'github_webhook',
+      'interface translation server pattern' => $module_path . '/translations/%language.po',
+    ],
+  ];
+}
+
+/**
  * Implements hook_entity_insert().
  */
 function github_webhook_entity_insert(EntityInterface $entity) {

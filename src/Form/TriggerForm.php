@@ -70,8 +70,10 @@ class TriggerForm extends FormBase
 
     // Attach JavaScript and settings.
     $form["#attached"]["library"][] = "github_webhook/status";
+    $status_url = \Drupal\Core\Url::fromRoute('github_webhook.status', ['repo_index' => '__REPO_INDEX__'])->toString();
+    $status_base_url = str_replace('/__REPO_INDEX__', '', $status_url);
     $form["#attached"]["drupalSettings"]["github_webhook"] = [
-      "status_base_url" => "/github-webhook/api/status",
+      "status_base_url" => $status_base_url,
       "is_admin" => \Drupal::currentUser()->hasPermission('administer github webhook'),
     ];
 
