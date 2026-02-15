@@ -2,6 +2,10 @@
 
 namespace Drupal\github_webhook\Service;
 
+use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\Logger\LoggerChannelInterface;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\GuzzleException;
@@ -10,6 +14,58 @@ use GuzzleHttp\Exception\GuzzleException;
  * Service for triggering GitHub repository_dispatch webhooks.
  */
 class WebhookTriggerService {
+
+  /**
+   * The HTTP client.
+   *
+   * @var \GuzzleHttp\ClientInterface
+   */
+  protected ClientInterface $httpClient;
+
+  /**
+   * The logger channel.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelInterface
+   */
+  protected LoggerChannelInterface $logger;
+
+  /**
+   * The module handler.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected ModuleHandlerInterface $moduleHandler;
+
+  /**
+   * The Key repository service (optional, requires Key module).
+   *
+   * @var \Drupal\key\KeyRepositoryInterface|null
+   */
+  protected $keyRepository;
+
+  /**
+   * Constructs a WebhookTriggerService object.
+   *
+   * @param \GuzzleHttp\ClientInterface $http_client
+   *   The HTTP client.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
+   *   The logger channel factory.
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   *   The module handler.
+   * @param mixed $key_repository
+   *   The Key repository service, or NULL if Key module is not installed.
+   */
+  public function __construct(
+    ClientInterface $http_client,
+    LoggerChannelFactoryInterface $logger_factory,
+    ModuleHandlerInterface $module_handler,
+    $key_repository = NULL,
+  ) {
+    $this->httpClient = $http_client;
+    $this->logger = $logger_factory->get('github_webhook');
+    $this->moduleHandler = $module_handler;
+    $this->keyRepository = $key_repository;
+  }
 
   /**
    * Triggers a repository_dispatch event for the given repository config.
@@ -27,18 +83,17 @@ class WebhookTriggerService {
 
     $token = $this->resolveToken($repository);
     if (empty($token)) {
-      \Drupal::logger('github_webhook')->error('No valid token found for @repository.', [
+      $this->logger->error('No valid token found for @repository.', [
         '@repository' => $owner . '/' . $repo,
       ]);
       return FALSE;
     }
 
     $event_type = $repository['event_type'] ?? 'webhook';
-    $client = \Drupal::httpClient();
     $url = 'https://api.github.com/repos/' . $owner . '/' . $repo . '/dispatches';
 
     try {
-      $client->request('POST', $url, [
+      $this->httpClient->request('POST', $url, [
         'headers' => [
           'Accept' => 'application/vnd.github+json',
           'Authorization' => 'Bearer ' . $token,
@@ -46,33 +101,34 @@ class WebhookTriggerService {
           'X-GitHub-Api-Version' => '2022-11-28',
         ],
         'json' => ['event_type' => $event_type],
+        'timeout' => 30,
       ]);
 
-      \Drupal::logger('github_webhook')->info('GitHub webhook triggered successfully for @repository.', [
+      $this->logger->info('GitHub webhook triggered successfully for @repository.', [
         '@repository' => $owner . '/' . $repo,
       ]);
       return TRUE;
     }
     catch (ClientException $e) {
-      \Drupal::logger('github_webhook')->error('Failed to trigger webhook for @repository: @error', [
+      $this->logger->error('Failed to trigger webhook for @repository: @error', [
         '@repository' => $owner . '/' . $repo,
         '@error' => $e->getMessage(),
       ]);
     }
     catch (RequestException $e) {
-      \Drupal::logger('github_webhook')->error('Request error for @repository: @error', [
+      $this->logger->error('Request error for @repository: @error', [
         '@repository' => $owner . '/' . $repo,
         '@error' => $e->getMessage(),
       ]);
     }
     catch (GuzzleException $e) {
-      \Drupal::logger('github_webhook')->error('General error for @repository: @error', [
+      $this->logger->error('General error for @repository: @error', [
         '@repository' => $owner . '/' . $repo,
         '@error' => $e->getMessage(),
       ]);
     }
     catch (\Exception $e) {
-      \Drupal::logger('github_webhook')->error('Unexpected error for @repository: @error', [
+      $this->logger->error('Unexpected error for @repository: @error', [
         '@repository' => $owner . '/' . $repo,
         '@error' => $e->getMessage(),
       ]);
@@ -93,10 +149,10 @@ class WebhookTriggerService {
   public function resolveToken(array $repository): ?string {
     $token_source = $repository['token_source'] ?? 'manual';
 
-    if ($token_source === 'key' && \Drupal::moduleHandler()->moduleExists('key')) {
+    if ($token_source === 'key' && $this->moduleHandler->moduleExists('key') && $this->keyRepository) {
       $key_id = $repository['token_key'] ?? '';
       if ($key_id) {
-        $key = \Drupal::service('key.repository')->getKey($key_id);
+        $key = $this->keyRepository->getKey($key_id);
         if ($key) {
           return $key->getKeyValue();
         }
@@ -115,30 +171,30 @@ class WebhookTriggerService {
    * @param int $run_id
    *   The workflow run ID to cancel.
    *
-   * @return bool
-   *   TRUE on success, FALSE on failure.
+   * @return array
+   *   An array with 'success' key, and optionally 'reason' on failure.
    */
-  public function cancelWorkflowRun(array $repository, int $run_id): bool {
+  public function cancelWorkflowRun(array $repository, int $run_id): array {
     $token = $this->resolveToken($repository);
     if (empty($token)) {
-      return FALSE;
+      return ['success' => FALSE, 'reason' => 'error'];
     }
 
     $owner = $repository['owner'];
     $repo = $repository['repo'];
-    $client = \Drupal::httpClient();
     $url = 'https://api.github.com/repos/' . $owner . '/' . $repo . '/actions/runs/' . $run_id . '/cancel';
 
     try {
-      $client->request('POST', $url, [
+      $this->httpClient->request('POST', $url, [
         'headers' => [
           'Accept' => 'application/vnd.github+json',
           'Authorization' => 'Bearer ' . $token,
           'X-GitHub-Api-Version' => '2022-11-28',
         ],
+        'timeout' => 30,
       ]);
 
-      \Drupal::logger('github_webhook')->info('Workflow run @run_id cancelled for @repository.', [
+      $this->logger->info('Workflow run @run_id cancelled for @repository.', [
         '@run_id' => $run_id,
         '@repository' => $owner . '/' . $repo,
       ]);
@@ -146,7 +202,7 @@ class WebhookTriggerService {
     }
     catch (ClientException $e) {
       $code = $e->getResponse()->getStatusCode();
-      \Drupal::logger('github_webhook')->error('Failed to cancel workflow run @run_id for @repo: @error', [
+      $this->logger->error('Failed to cancel workflow run @run_id for @repo: @error', [
         '@run_id' => $run_id,
         '@repo' => $owner . '/' . $repo,
         '@error' => $e->getMessage(),
@@ -160,7 +216,7 @@ class WebhookTriggerService {
       return ['success' => FALSE, 'reason' => 'error'];
     }
     catch (\Exception $e) {
-      \Drupal::logger('github_webhook')->error('Failed to cancel workflow run @run_id for @repo: @error', [
+      $this->logger->error('Failed to cancel workflow run @run_id for @repo: @error', [
         '@run_id' => $run_id,
         '@repo' => $owner . '/' . $repo,
         '@error' => $e->getMessage(),
@@ -189,7 +245,6 @@ class WebhookTriggerService {
     $owner = $repository['owner'];
     $repo = $repository['repo'];
     $workflow_file = $repository['workflow_file'] ?? '';
-    $client = \Drupal::httpClient();
 
     if (!empty($workflow_file)) {
       $url = 'https://api.github.com/repos/' . $owner . '/' . $repo . '/actions/workflows/' . $workflow_file . '/runs';
@@ -199,7 +254,7 @@ class WebhookTriggerService {
     }
 
     try {
-      $response = $client->request('GET', $url, [
+      $response = $this->httpClient->request('GET', $url, [
         'headers' => [
           'Accept' => 'application/vnd.github+json',
           'Authorization' => 'Bearer ' . $token,
@@ -209,13 +264,14 @@ class WebhookTriggerService {
           'event' => 'repository_dispatch',
           'per_page' => $perPage,
         ],
+        'timeout' => 30,
       ]);
 
       $data = json_decode($response->getBody()->getContents(), TRUE);
       return $data['workflow_runs'] ?? [];
     }
     catch (\Exception $e) {
-      \Drupal::logger('github_webhook')->error('Failed to fetch workflow runs for @repo: @error', [
+      $this->logger->error('Failed to fetch workflow runs for @repo: @error', [
         '@repo' => $owner . '/' . $repo,
         '@error' => $e->getMessage(),
       ]);

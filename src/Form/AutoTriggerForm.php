@@ -2,11 +2,47 @@
 
 namespace Drupal\github_webhook\Form;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Config\TypedConfigManagerInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class AutoTriggerForm extends ConfigFormBase
 {
+  /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected EntityTypeManagerInterface $entityTypeManager;
+
+  /**
+   * Constructs an AutoTriggerForm object.
+   *
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager.
+   */
+  public function __construct(ConfigFactoryInterface $config_factory, TypedConfigManagerInterface $typed_config_manager, EntityTypeManagerInterface $entity_type_manager) {
+    parent::__construct($config_factory, $typed_config_manager);
+    $this->entityTypeManager = $entity_type_manager;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('config.factory'),
+      $container->get('config.typed'),
+      $container->get('entity_type.manager'),
+    );
+  }
+
   /**
    * {@inheritdoc}
    */
@@ -39,7 +75,7 @@ class AutoTriggerForm extends ConfigFormBase
     ];
 
     // Content type checkboxes.
-    $content_types = \Drupal::entityTypeManager()
+    $content_types = $this->entityTypeManager
       ->getStorage('node_type')
       ->loadMultiple();
     $content_type_options = [];
@@ -64,7 +100,7 @@ class AutoTriggerForm extends ConfigFormBase
     if (empty($repo_options)) {
       $form["no_repos"] = [
         "#markup" => '<p>' . $this->t('No repositories configured. <a href=":url">Add repositories</a> first.', [
-          ':url' => '/github-webhook/settings',
+          ':url' => Url::fromRoute('github_webhook.trigger')->toString(),
         ]) . '</p>',
       ];
     }

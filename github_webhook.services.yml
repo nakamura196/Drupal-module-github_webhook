@@ -1,3 +1,8 @@
 services:
   github_webhook.trigger:
     class: Drupal\github_webhook\Service\WebhookTriggerService
+    arguments:
+      - '@http_client'
+      - '@logger.factory'
+      - '@module_handler'
+      - '@?key.repository'

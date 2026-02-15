@@ -9,6 +9,9 @@ github_webhook.settings:
         type: mapping
         label: 'Repository'
         mapping:
+          label:
+            type: string
+            label: 'Label'
           owner:
             type: string
             label: 'Owner'

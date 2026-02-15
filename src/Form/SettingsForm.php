@@ -2,11 +2,57 @@
 
 namespace Drupal\github_webhook\Form;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Config\TypedConfigManagerInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class SettingsForm extends ConfigFormBase
 {
+  /**
+   * The module handler.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected ModuleHandlerInterface $moduleHandler;
+
+  /**
+   * The Key repository service (optional).
+   *
+   * @var \Drupal\key\KeyRepositoryInterface|null
+   */
+  protected ?object $keyRepository;
+
+  /**
+   * Constructs a SettingsForm object.
+   *
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory.
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   *   The module handler.
+   * @param \Drupal\key\KeyRepositoryInterface|null $key_repository
+   *   The Key repository service, or NULL if Key module is not installed.
+   */
+  public function __construct(ConfigFactoryInterface $config_factory, TypedConfigManagerInterface $typed_config_manager, ModuleHandlerInterface $module_handler, ?object $key_repository = NULL) {
+    parent::__construct($config_factory, $typed_config_manager);
+    $this->moduleHandler = $module_handler;
+    $this->keyRepository = $key_repository;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('config.factory'),
+      $container->get('config.typed'),
+      $container->get('module_handler'),
+      $container->has('key.repository') ? $container->get('key.repository') : NULL,
+    );
+  }
+
   /**
    * {@inheritdoc}
    */
@@ -31,10 +77,10 @@ class SettingsForm extends ConfigFormBase
     $config = $this->config("github_webhook.settings");
     $repos = $config->get("repositories") ?? [];
 
-    $key_module_available = \Drupal::moduleHandler()->moduleExists('key');
+    $key_module_available = $this->moduleHandler->moduleExists('key');
     $key_options = [];
-    if ($key_module_available) {
-      $keys = \Drupal::service('key.repository')->getKeys();
+    if ($key_module_available && $this->keyRepository) {
+      $keys = $this->keyRepository->getKeys();
       foreach ($keys as $key) {
         $key_options[$key->id()] = $key->label();
       }
@@ -332,5 +378,7 @@ class SettingsForm extends ConfigFormBase
     $this->config("github_webhook.settings")
       ->set("repositories", $repos)
       ->save();
+
+    parent::submitForm($form, $form_state);
   }
 }
