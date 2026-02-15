@@ -42,6 +42,44 @@ class StatusController extends ControllerBase
   }
 
   /**
+   * Cancels a workflow run via AJAX.
+   */
+  public function cancel($repo_index, $run_id)
+  {
+    $config = \Drupal::config('github_webhook.settings');
+    $repositories = $config->get('repositories') ?? [];
+
+    if (!isset($repositories[$repo_index])) {
+      return new JsonResponse(['success' => FALSE, 'message' => 'Repository not found'], 404);
+    }
+
+    $repository = $repositories[$repo_index];
+
+    /** @var \Drupal\github_webhook\Service\WebhookTriggerService $trigger_service */
+    $trigger_service = \Drupal::service('github_webhook.trigger');
+    $result = $trigger_service->cancelWorkflowRun($repository, (int) $run_id);
+
+    $headers = ['Cache-Control' => 'no-cache, no-store, must-revalidate'];
+
+    if ($result['success']) {
+      return new JsonResponse(['success' => TRUE, 'message' => (string) $this->t('Workflow run cancelled.')], 200, $headers);
+    }
+
+    $reason = $result['reason'] ?? 'error';
+    if ($reason === 'forbidden') {
+      $message = (string) $this->t('Token does not have permission to cancel workflow runs. Update the token with Actions read/write permission.');
+    }
+    elseif ($reason === 'conflict') {
+      $message = (string) $this->t('This workflow run has already completed and cannot be cancelled.');
+    }
+    else {
+      $message = (string) $this->t('Failed to cancel workflow run.');
+    }
+
+    return new JsonResponse(['success' => FALSE, 'message' => $message], 200, $headers);
+  }
+
+  /**
    * Returns workflow run status as JSON.
    */
   public function getStatus($repo_index)

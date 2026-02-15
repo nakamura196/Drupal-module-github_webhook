@@ -78,9 +78,12 @@ class TriggerForm extends FormBase
     $status_base_url = preg_replace('#/0$#', '', $status_url);
     $trigger_url = \Drupal\Core\Url::fromRoute('github_webhook.trigger_api', ['repo_index' => 0])->toString();
     $trigger_base_url = preg_replace('#/0$#', '', $trigger_url);
+    $cancel_url = \Drupal\Core\Url::fromRoute('github_webhook.cancel_api', ['repo_index' => 0, 'run_id' => 0])->toString();
+    $cancel_base_url = preg_replace('#/0/0$#', '', $cancel_url);
     $form["#attached"]["drupalSettings"]["github_webhook"] = [
       "status_base_url" => $status_base_url,
       "trigger_base_url" => $trigger_base_url,
+      "cancel_base_url" => $cancel_base_url,
       "is_admin" => \Drupal::currentUser()->hasPermission('administer github webhook'),
     ];
 

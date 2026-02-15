@@ -76,9 +76,8 @@ class SettingsForm extends ConfigFormBase
         }
 
         $form["repositories"]["repo" . $row_no] = [
-          "#type" => "details",
+          "#type" => "fieldset",
           "#title" => $detail_title,
-          "#open" => true,
         ];
 
         $form["repositories"]["repo" . $row_no][$row_no]["label"] = [

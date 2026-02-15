@@ -43,3 +43,15 @@ github_webhook.trigger_api:
   methods: [POST]
   options:
     no_cache: TRUE
+
+github_webhook.cancel_api:
+  path: '/github-webhook/api/cancel/{repo_index}/{run_id}'
+  defaults:
+    _controller: '\Drupal\github_webhook\Controller\StatusController::cancel'
+  requirements:
+    _permission: 'trigger github webhook'
+    repo_index: '\d+'
+    run_id: '\d+'
+  methods: [POST]
+  options:
+    no_cache: TRUE

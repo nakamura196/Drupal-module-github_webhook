@@ -108,6 +108,68 @@ class WebhookTriggerService {
   }
 
   /**
+   * Cancels a workflow run.
+   *
+   * @param array $repository
+   *   The repository configuration array.
+   * @param int $run_id
+   *   The workflow run ID to cancel.
+   *
+   * @return bool
+   *   TRUE on success, FALSE on failure.
+   */
+  public function cancelWorkflowRun(array $repository, int $run_id): bool {
+    $token = $this->resolveToken($repository);
+    if (empty($token)) {
+      return FALSE;
+    }
+
+    $owner = $repository['owner'];
+    $repo = $repository['repo'];
+    $client = \Drupal::httpClient();
+    $url = 'https://api.github.com/repos/' . $owner . '/' . $repo . '/actions/runs/' . $run_id . '/cancel';
+
+    try {
+      $client->request('POST', $url, [
+        'headers' => [
+          'Accept' => 'application/vnd.github+json',
+          'Authorization' => 'Bearer ' . $token,
+          'X-GitHub-Api-Version' => '2022-11-28',
+        ],
+      ]);
+
+      \Drupal::logger('github_webhook')->info('Workflow run @run_id cancelled for @repository.', [
+        '@run_id' => $run_id,
+        '@repository' => $owner . '/' . $repo,
+      ]);
+      return ['success' => TRUE];
+    }
+    catch (ClientException $e) {
+      $code = $e->getResponse()->getStatusCode();
+      \Drupal::logger('github_webhook')->error('Failed to cancel workflow run @run_id for @repo: @error', [
+        '@run_id' => $run_id,
+        '@repo' => $owner . '/' . $repo,
+        '@error' => $e->getMessage(),
+      ]);
+      if ($code === 403) {
+        return ['success' => FALSE, 'reason' => 'forbidden'];
+      }
+      if ($code === 409) {
+        return ['success' => FALSE, 'reason' => 'conflict'];
+      }
+      return ['success' => FALSE, 'reason' => 'error'];
+    }
+    catch (\Exception $e) {
+      \Drupal::logger('github_webhook')->error('Failed to cancel workflow run @run_id for @repo: @error', [
+        '@run_id' => $run_id,
+        '@repo' => $owner . '/' . $repo,
+        '@error' => $e->getMessage(),
+      ]);
+      return ['success' => FALSE, 'reason' => 'error'];
+    }
+  }
+
+  /**
    * Fetches recent workflow runs triggered by repository_dispatch.
    *
    * @param array $repository
