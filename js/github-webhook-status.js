@@ -20,13 +20,11 @@
         });
 
         if (hasActive) {
-          // Active runs found — keep polling.
           retryCount = 0;
           pollTimer = setTimeout(function () {
             fetchStatus(repoIndex, container);
           }, POLL_INTERVAL);
         } else if (retryCount < MAX_RETRIES) {
-          // No active runs yet — retry a few times (new run may not be registered yet).
           retryCount++;
           pollTimer = setTimeout(function () {
             fetchStatus(repoIndex, container);
@@ -35,6 +33,67 @@
       })
       .catch(function () {
         container.innerHTML = '<p>' + Drupal.t('Failed to load workflow status.') + '</p>';
+      });
+  }
+
+  function triggerWebhook(repoIndex, container, button) {
+    var url = drupalSettings.github_webhook.trigger_base_url + '/' + repoIndex;
+
+    button.disabled = true;
+    button.value = Drupal.t('Triggering...');
+
+    // Fetch CSRF token first, then trigger.
+    fetch(Drupal.url('session/token'))
+      .then(function (response) { return response.text(); })
+      .then(function (token) {
+        return fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': token,
+          },
+        });
+      })
+      .then(function (response) { return response.json(); })
+      .then(function (data) {
+        button.disabled = false;
+        button.value = Drupal.t('Trigger Webhook');
+
+        var msgContainer = document.getElementById('github-webhook-messages');
+        if (!msgContainer) {
+          msgContainer = document.createElement('div');
+          msgContainer.id = 'github-webhook-messages';
+          container.parentNode.insertBefore(msgContainer, container);
+        }
+
+        if (data.success) {
+          var msg = data.message;
+          if (data.actions_url) {
+            msg += ' <a href="' + data.actions_url + '" target="_blank">View Actions</a>';
+          }
+          msgContainer.innerHTML = '<div class="messages messages--status" role="status">' + msg + '</div>';
+
+          // Reset retry count and start polling to pick up the new run.
+          if (pollTimer) clearTimeout(pollTimer);
+          retryCount = 0;
+          pollTimer = setTimeout(function () {
+            fetchStatus(repoIndex, container);
+          }, RETRY_INTERVAL);
+        } else {
+          msgContainer.innerHTML = '<div class="messages messages--error" role="alert">' + data.message + '</div>';
+        }
+      })
+      .catch(function () {
+        button.disabled = false;
+        button.value = Drupal.t('Trigger Webhook');
+
+        var msgContainer = document.getElementById('github-webhook-messages');
+        if (!msgContainer) {
+          msgContainer = document.createElement('div');
+          msgContainer.id = 'github-webhook-messages';
+          container.parentNode.insertBefore(msgContainer, container);
+        }
+        msgContainer.innerHTML = '<div class="messages messages--error" role="alert">' + Drupal.t('An error occurred while triggering the webhook.') + '</div>';
       });
   }
 
@@ -132,6 +191,7 @@
       container.dataset.processed = 'true';
 
       var select = document.querySelector('[name="select_repo"]');
+      var triggerBtn = document.getElementById('github-webhook-trigger-btn');
       if (!select) return;
 
       function loadStatus() {
@@ -150,6 +210,19 @@
 
       // Reload on select change.
       select.addEventListener('change', loadStatus);
+
+      // Trigger via AJAX.
+      if (triggerBtn) {
+        triggerBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          var val = select.value;
+          if (val === '') {
+            alert(Drupal.t('Please select a repository.'));
+            return;
+          }
+          triggerWebhook(val, container, triggerBtn);
+        });
+      }
     }
   };
 

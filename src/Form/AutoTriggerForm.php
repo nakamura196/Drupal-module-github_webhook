@@ -58,7 +58,7 @@ class AutoTriggerForm extends ConfigFormBase
     // Repository checkboxes.
     $repo_options = [];
     foreach ($repos as $key => $repo) {
-      $repo_options[$key] = $repo["owner"] . "/" . $repo["repo"];
+      $repo_options[$key] = !empty($repo["label"]) ? $repo["label"] : $repo["owner"] . "/" . $repo["repo"];
     }
 
     if (empty($repo_options)) {

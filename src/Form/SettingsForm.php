@@ -67,10 +67,28 @@ class SettingsForm extends ConfigFormBase
       if ($is_active_row) {
         $index++;
 
+        $label_value = $repos[$row_no]["label"] ?? "";
+        $detail_title = $label_value
+          ? $label_value
+          : ($repos[$row_no]["owner"] ?? "") . "/" . ($repos[$row_no]["repo"] ?? "");
+        if (!$detail_title || $detail_title === "/") {
+          $detail_title = $this->t("Repository @row", ["@row" => $index]);
+        }
+
         $form["repositories"]["repo" . $row_no] = [
           "#type" => "details",
-          "#title" => $this->t("Repository @row", ["@row" => $index]),
+          "#title" => $detail_title,
           "#open" => true,
+        ];
+
+        $form["repositories"]["repo" . $row_no][$row_no]["label"] = [
+          "#type" => "textfield",
+          "#title" => $this->t("Label"),
+          "#default_value" => $label_value,
+          "#placeholder" => $this->t("e.g. Production site"),
+          "#description" => $this->t(
+            "Optional display name for this repository. If empty, owner/repo will be used."
+          ),
         ];
 
         $form["repositories"]["repo" . $row_no][$row_no]["owner"] = [
@@ -246,6 +264,12 @@ class SettingsForm extends ConfigFormBase
       $is_active_row = $form_state->get("row_" . $row_no . "_active");
       if ($is_active_row) {
         $current_repo = [
+          "label" => $form_state->getValue([
+            "repositories",
+            "repo" . $row_no,
+            $row_no,
+            "label",
+          ]) ?? "",
           "owner" => $form_state->getValue([
             "repositories",
             "repo" . $row_no,

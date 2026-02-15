@@ -25,7 +25,7 @@ class TriggerForm extends FormBase
 
     $options = [];
     foreach ($repos as $key => $repo) {
-      $options[$key] = $repo["owner"] . "/" . $repo["repo"];
+      $options[$key] = !empty($repo["label"]) ? $repo["label"] : $repo["owner"] . "/" . $repo["repo"];
     }
 
     if (empty($options)) {
@@ -51,8 +51,12 @@ class TriggerForm extends FormBase
     $form["select_repo"] = $select;
 
     $form["actions"]["trigger"] = [
-      "#type" => "submit",
+      "#type" => "button",
       "#value" => $this->t("Trigger Webhook"),
+      "#attributes" => [
+        "id" => "github-webhook-trigger-btn",
+        "type" => "button",
+      ],
     ];
 
     // Workflow run status container (populated via JavaScript).
@@ -72,8 +76,11 @@ class TriggerForm extends FormBase
     $form["#attached"]["library"][] = "github_webhook/status";
     $status_url = \Drupal\Core\Url::fromRoute('github_webhook.status', ['repo_index' => 0])->toString();
     $status_base_url = preg_replace('#/0$#', '', $status_url);
+    $trigger_url = \Drupal\Core\Url::fromRoute('github_webhook.trigger_api', ['repo_index' => 0])->toString();
+    $trigger_base_url = preg_replace('#/0$#', '', $trigger_url);
     $form["#attached"]["drupalSettings"]["github_webhook"] = [
       "status_base_url" => $status_base_url,
+      "trigger_base_url" => $trigger_base_url,
       "is_admin" => \Drupal::currentUser()->hasPermission('administer github webhook'),
     ];
 
@@ -85,49 +92,6 @@ class TriggerForm extends FormBase
    */
   public function submitForm(array &$form, FormStateInterface $form_state)
   {
-    $config = \Drupal::config("github_webhook.settings");
-    $selected_repo = $form_state->getValue("select_repo");
-
-    if ($selected_repo === null || $selected_repo === '') {
-      $this->messenger()->addError(
-        $this->t("No repository selected. Please select a repository.")
-      );
-      return;
-    }
-
-    $repositories = $config->get("repositories");
-    $repository = $repositories[$selected_repo];
-
-    /** @var \Drupal\github_webhook\Service\WebhookTriggerService $trigger_service */
-    $trigger_service = \Drupal::service('github_webhook.trigger');
-    $success = $trigger_service->triggerRepository($repository);
-
-    $owner = $repository['owner'];
-    $repo = $repository['repo'];
-    $label = $owner . '/' . $repo;
-
-    if ($success) {
-      if (\Drupal::currentUser()->hasPermission('administer github webhook')) {
-        $actions_url = 'https://github.com/' . $owner . '/' . $repo . '/actions';
-        $this->messenger()->addMessage(
-          $this->t('GitHub webhook triggered successfully for @repository. <a href=":url" target="_blank">View Actions</a>', [
-            "@repository" => $label,
-            ":url" => $actions_url,
-          ])
-        );
-      } else {
-        $this->messenger()->addMessage(
-          $this->t("GitHub webhook triggered successfully for @repository.", [
-            "@repository" => $label,
-          ])
-        );
-      }
-    } else {
-      $this->messenger()->addError(
-        $this->t("Failed to trigger GitHub webhook for @repository. Please contact an administrator.", [
-          "@repository" => $label,
-        ])
-      );
-    }
+    // Trigger is handled via AJAX — no server-side form submission needed.
   }
 }
