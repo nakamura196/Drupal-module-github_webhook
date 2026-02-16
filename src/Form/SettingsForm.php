@@ -242,6 +242,7 @@ class SettingsForm extends ConfigFormBase
           "#name" => $row_no,
           "#value" => $this->t("Remove repository"),
           "#submit" => ["::removeCallback"],
+          "#limit_validation_errors" => [],
           "#ajax" => [
             "callback" => "::addmoreCallback",
             "wrapper" => "names-fieldset-wrapper",
@@ -258,6 +259,7 @@ class SettingsForm extends ConfigFormBase
       "#type" => "submit",
       "#value" => $this->t("Add repository"),
       "#submit" => ["::addOne"],
+      "#limit_validation_errors" => [],
       "#ajax" => [
         "callback" => "::addmoreCallback",
         "wrapper" => "names-fieldset-wrapper",

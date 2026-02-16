@@ -203,6 +203,7 @@ class VercelSettingsForm extends ConfigFormBase
           "#name" => $row_no,
           "#value" => $this->t("Remove project"),
           "#submit" => ["::removeCallback"],
+          "#limit_validation_errors" => [],
           "#ajax" => [
             "callback" => "::addmoreCallback",
             "wrapper" => "vercel-fieldset-wrapper",
@@ -219,6 +220,7 @@ class VercelSettingsForm extends ConfigFormBase
       "#type" => "submit",
       "#value" => $this->t("Add project"),
       "#submit" => ["::addOne"],
+      "#limit_validation_errors" => [],
       "#ajax" => [
         "callback" => "::addmoreCallback",
         "wrapper" => "vercel-fieldset-wrapper",
