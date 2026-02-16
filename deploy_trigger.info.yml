@@ -3,4 +3,4 @@ description: 'Trigger deployments on GitHub Actions and Vercel from the Drupal a
 package: Custom
 type: module
 core_version_requirement: ^10 || ^11
-php: 8.3
+php: 8.2
