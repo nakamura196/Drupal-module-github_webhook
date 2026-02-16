@@ -1,0 +1,97 @@
+deploy_trigger.trigger:
+  path: '/deploy-trigger/settings'
+  defaults:
+    _form: '\Drupal\deploy_trigger\Form\TriggerForm'
+    _title: 'Trigger Deploy'
+  requirements:
+    _permission: 'trigger deploy'
+
+deploy_trigger.repositories:
+  path: '/deploy-trigger/settings/repositories'
+  defaults:
+    _form: '\Drupal\deploy_trigger\Form\SettingsForm'
+    _title: 'GitHub Repositories'
+  requirements:
+    _permission: 'administer deploy trigger'
+
+deploy_trigger.vercel_projects:
+  path: '/deploy-trigger/settings/vercel-projects'
+  defaults:
+    _form: '\Drupal\deploy_trigger\Form\VercelSettingsForm'
+    _title: 'Vercel Projects'
+  requirements:
+    _permission: 'administer deploy trigger'
+
+deploy_trigger.auto_trigger:
+  path: '/deploy-trigger/settings/auto-trigger'
+  defaults:
+    _form: '\Drupal\deploy_trigger\Form\AutoTriggerForm'
+    _title: 'Auto Trigger'
+  requirements:
+    _permission: 'administer deploy trigger'
+
+deploy_trigger.github_status:
+  path: '/deploy-trigger/api/github/status/{repo_index}'
+  defaults:
+    _controller: '\Drupal\deploy_trigger\Controller\GitHubController::getStatus'
+  requirements:
+    _permission: 'trigger deploy'
+    repo_index: '\d+'
+  options:
+    no_cache: TRUE
+
+deploy_trigger.github_trigger_api:
+  path: '/deploy-trigger/api/github/trigger/{repo_index}'
+  defaults:
+    _controller: '\Drupal\deploy_trigger\Controller\GitHubController::trigger'
+  requirements:
+    _permission: 'trigger deploy'
+    repo_index: '\d+'
+  methods: [POST]
+  options:
+    no_cache: TRUE
+
+deploy_trigger.github_cancel_api:
+  path: '/deploy-trigger/api/github/cancel/{repo_index}/{run_id}'
+  defaults:
+    _controller: '\Drupal\deploy_trigger\Controller\GitHubController::cancel'
+  requirements:
+    _permission: 'trigger deploy'
+    repo_index: '\d+'
+    run_id: '\d+'
+  methods: [POST]
+  options:
+    no_cache: TRUE
+
+deploy_trigger.vercel_status:
+  path: '/deploy-trigger/api/vercel/status/{project_index}'
+  defaults:
+    _controller: '\Drupal\deploy_trigger\Controller\VercelController::getStatus'
+  requirements:
+    _permission: 'trigger deploy'
+    project_index: '\d+'
+  options:
+    no_cache: TRUE
+
+deploy_trigger.vercel_trigger_api:
+  path: '/deploy-trigger/api/vercel/trigger/{project_index}'
+  defaults:
+    _controller: '\Drupal\deploy_trigger\Controller\VercelController::trigger'
+  requirements:
+    _permission: 'trigger deploy'
+    project_index: '\d+'
+  methods: [POST]
+  options:
+    no_cache: TRUE
+
+deploy_trigger.vercel_cancel_api:
+  path: '/deploy-trigger/api/vercel/cancel/{project_index}/{deployment_id}'
+  defaults:
+    _controller: '\Drupal\deploy_trigger\Controller\VercelController::cancel'
+  requirements:
+    _permission: 'trigger deploy'
+    project_index: '\d+'
+    deployment_id: '[a-zA-Z0-9_]+'
+  methods: [POST]
+  options:
+    no_cache: TRUE

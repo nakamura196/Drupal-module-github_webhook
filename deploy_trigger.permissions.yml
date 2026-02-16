@@ -1,0 +1,8 @@
+administer deploy trigger:
+  title: 'Administer Deploy Trigger'
+  description: 'Configure repositories, projects, tokens, and auto-trigger settings.'
+  restrict access: true
+
+trigger deploy:
+  title: 'Trigger Deploy'
+  description: 'Trigger deployments on GitHub Actions and Vercel.'

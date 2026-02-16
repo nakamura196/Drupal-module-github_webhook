@@ -1,6 +1,6 @@
 {
-  "name": "drupal/github_webhook",
-  "description": "Trigger GitHub repository_dispatch events from the Drupal admin UI.",
+  "name": "drupal/deploy_trigger",
+  "description": "Trigger deployments on GitHub Actions and Vercel from the Drupal admin UI.",
   "type": "drupal-module",
   "license": "Apache-2.0",
   "require": {

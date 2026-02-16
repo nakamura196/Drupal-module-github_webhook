@@ -9,7 +9,7 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
-class SettingsForm extends ConfigFormBase
+class VercelSettingsForm extends ConfigFormBase
 {
   /**
    * The module handler.
@@ -26,7 +26,7 @@ class SettingsForm extends ConfigFormBase
   protected ?object $keyRepository;
 
   /**
-   * Constructs a SettingsForm object.
+   * Constructs a VercelSettingsForm object.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory.
@@ -60,7 +60,7 @@ class SettingsForm extends ConfigFormBase
    */
   public function getFormId()
   {
-    return "deploy_trigger_settings";
+    return "deploy_trigger_vercel_settings";
   }
 
   /**
@@ -77,7 +77,7 @@ class SettingsForm extends ConfigFormBase
   public function buildForm(array $form, FormStateInterface $form_state)
   {
     $config = $this->config("deploy_trigger.settings");
-    $repos = $config->get("repositories") ?? [];
+    $projects = $config->get("vercel_projects") ?? [];
 
     $key_module_available = $this->moduleHandler->moduleExists('key');
     $key_options = [];
@@ -88,12 +88,10 @@ class SettingsForm extends ConfigFormBase
       }
     }
 
-    // Gather the number of rows in the form already.
     $row_count = $form_state->get("row_count");
-    // We have to ensure that there is at least one row field.
     if ($row_count === null) {
-      $form_state->set("row_count", count($repos));
-      $row_count = count($repos);
+      $form_state->set("row_count", count($projects));
+      $row_count = count($projects);
 
       for ($row_no = 0; $row_no < $row_count; $row_no++) {
         $form_state->set("row_" . $row_no . "_active", 1);
@@ -101,9 +99,9 @@ class SettingsForm extends ConfigFormBase
     }
 
     $form["#tree"] = true;
-    $form["repositories"] = [
+    $form["projects"] = [
       "#type" => "container",
-      "#prefix" => '<div id="names-fieldset-wrapper">',
+      "#prefix" => '<div id="vercel-fieldset-wrapper">',
       "#suffix" => "</div>",
     ];
 
@@ -115,152 +113,115 @@ class SettingsForm extends ConfigFormBase
       if ($is_active_row) {
         $index++;
 
-        $label_value = $repos[$row_no]["label"] ?? "";
-        $detail_title = $label_value
-          ? $label_value
-          : ($repos[$row_no]["owner"] ?? "") . "/" . ($repos[$row_no]["repo"] ?? "");
-        if (!$detail_title || $detail_title === "/") {
-          $detail_title = $this->t("Repository @row", ["@row" => $index]);
-        }
+        $label_value = $projects[$row_no]["label"] ?? "";
+        $detail_title = $label_value ?: $this->t("Project @row", ["@row" => $index]);
 
-        $form["repositories"]["repo" . $row_no] = [
+        $form["projects"]["project" . $row_no] = [
           "#type" => "fieldset",
           "#title" => $detail_title,
         ];
 
-        $form["repositories"]["repo" . $row_no][$row_no]["label"] = [
+        $form["projects"]["project" . $row_no][$row_no]["label"] = [
           "#type" => "textfield",
           "#title" => $this->t("Label"),
           "#default_value" => $label_value,
-          "#placeholder" => $this->t("e.g. Production site"),
-          "#description" => $this->t(
-            "Display name for this repository. If empty, owner/repo will be used."
-          ),
+          "#placeholder" => $this->t("e.g. My Vercel Site"),
+          "#description" => $this->t("Display name for this Vercel project."),
         ];
 
-        $form["repositories"]["repo" . $row_no][$row_no]["owner"] = [
-          "#type" => "textfield",
-          "#title" => $this->t("Owner"),
-          "#required" => TRUE,
-          "#default_value" => $repos[$row_no]["owner"] ?? "",
-          "#placeholder" => "OWNER",
-          "#description" => $this->t(
-            "Enter the owner of the GitHub repository."
-          ),
+        // Deploy Hook URL — password field, never return saved value.
+        $has_hook_url = !empty($projects[$row_no]["deploy_hook_url"]);
+        $form["projects"]["project" . $row_no][$row_no]["deploy_hook_url"] = [
+          "#type" => "password",
+          "#title" => $this->t("Deploy Hook URL"),
+          "#required" => !$has_hook_url,
+          "#placeholder" => "https://api.vercel.com/v1/integrations/deploy/...",
+          "#description" => $has_hook_url
+            ? $this->t("A Deploy Hook URL is already saved. Leave blank to keep the current URL.")
+            : $this->t("Enter the Vercel Deploy Hook URL. This URL is a secret and will be stored securely."),
         ];
 
-        $form["repositories"]["repo" . $row_no][$row_no]["repo"] = [
+        $form["projects"]["project" . $row_no][$row_no]["project_id"] = [
           "#type" => "textfield",
-          "#title" => $this->t("Repo"),
-          "#required" => TRUE,
-          "#default_value" => $repos[$row_no]["repo"] ?? "",
-          "#placeholder" => "REPO",
-          "#description" => $this->t(
-            "Enter the name of the GitHub repository."
-          ),
+          "#title" => $this->t("Project ID"),
+          "#default_value" => $projects[$row_no]["project_id"] ?? "",
+          "#placeholder" => "prj_xxxxxxxxxxxxxxxxxxxx",
+          "#description" => $this->t("Vercel project ID for status monitoring. Leave blank if you only need to trigger deploys."),
         ];
 
         // Token source selection (only when Key module is available).
         if ($key_module_available) {
-          $form["repositories"]["repo" . $row_no][$row_no]["token_source"] = [
+          $form["projects"]["project" . $row_no][$row_no]["token_source"] = [
             "#type" => "select",
             "#title" => $this->t("Token Source"),
             "#options" => [
               "manual" => $this->t("Manual input"),
               "key" => $this->t("Key module"),
             ],
-            "#default_value" => $repos[$row_no]["token_source"] ?? "manual",
-            "#description" => $this->t(
-              "Choose how to provide the GitHub token."
-            ),
+            "#default_value" => $projects[$row_no]["token_source"] ?? "manual",
+            "#description" => $this->t("Choose how to provide the Vercel API token."),
           ];
         }
 
-        // GitHub Token (manual input) — never return the saved value.
-        $has_manual_token = !empty($repos[$row_no]["github_token"]);
+        // Vercel Token (manual input) — never return the saved value.
+        $has_manual_token = !empty($projects[$row_no]["vercel_token"]);
         $token_field = [
           "#type" => "password",
-          "#title" => $this->t("GitHub Token"),
-          "#required" => !$has_manual_token,
-          "#placeholder" => "github_pat_XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+          "#title" => $this->t("Vercel Token"),
           "#description" => $has_manual_token
             ? $this->t("A token is already saved. Leave blank to keep the current token.")
-            : $this->t("Enter your GitHub personal access token. A fine-grained token with minimal permissions is recommended."),
+            : $this->t("Vercel API token for status monitoring and cancel operations. Not required for triggering deploys."),
         ];
         if ($key_module_available) {
           $token_field["#states"] = [
             "visible" => [
-              ':input[name="repositories[repo' . $row_no . '][' . $row_no . '][token_source]"]' => ["value" => "manual"],
+              ':input[name="projects[project' . $row_no . '][' . $row_no . '][token_source]"]' => ["value" => "manual"],
             ],
           ];
         }
-        $form["repositories"]["repo" . $row_no][$row_no]["github_token"] = $token_field;
+        $form["projects"]["project" . $row_no][$row_no]["vercel_token"] = $token_field;
 
         // Key module token selector.
         if ($key_module_available) {
-          $form["repositories"]["repo" . $row_no][$row_no]["token_key"] = [
+          $form["projects"]["project" . $row_no][$row_no]["token_key"] = [
             "#type" => "select",
             "#title" => $this->t("Key"),
             "#options" => $key_options,
             "#empty_option" => $this->t("- Select a key -"),
-            "#default_value" => $repos[$row_no]["token_key"] ?? "",
-            "#description" => $this->t(
-              "Select a key that contains the GitHub token."
-            ),
+            "#default_value" => $projects[$row_no]["token_key"] ?? "",
+            "#description" => $this->t("Select a key that contains the Vercel API token."),
             "#states" => [
               "visible" => [
-                ':input[name="repositories[repo' . $row_no . '][' . $row_no . '][token_source]"]' => ["value" => "key"],
+                ':input[name="projects[project' . $row_no . '][' . $row_no . '][token_source]"]' => ["value" => "key"],
               ],
             ],
           ];
         }
 
-        // event_type
-        $form["repositories"]["repo" . $row_no][$row_no]["event_type"] = [
-          "#type" => "textfield",
-          "#title" => $this->t("Event Type"),
-          "#required" => TRUE,
-          "#default_value" => $repos[$row_no]["event_type"] ?? "webhook",
-          "#description" => $this->t(
-            "Enter the event type to trigger the webhook."
-          ),
-        ];
-
-        // workflow_file
-        $form["repositories"]["repo" . $row_no][$row_no]["workflow_file"] = [
-          "#type" => "textfield",
-          "#title" => $this->t("Workflow File"),
-          "#default_value" => $repos[$row_no]["workflow_file"] ?? "",
-          "#placeholder" => "deploy.yml",
-          "#description" => $this->t(
-            "Optional. The workflow filename (e.g. deploy.yml) to filter status display. Leave blank to show all repository_dispatch runs."
-          ),
-        ];
-
-        $form["repositories"]["repo" . $row_no][$row_no]["remove_name"] = [
+        $form["projects"]["project" . $row_no][$row_no]["remove_name"] = [
           "#type" => "submit",
           "#name" => $row_no,
-          "#value" => $this->t("Remove repository"),
+          "#value" => $this->t("Remove project"),
           "#submit" => ["::removeCallback"],
           "#ajax" => [
             "callback" => "::addmoreCallback",
-            "wrapper" => "names-fieldset-wrapper",
+            "wrapper" => "vercel-fieldset-wrapper",
           ],
         ];
       }
     }
 
-    $form["repositories"]["actions"] = [
+    $form["projects"]["actions"] = [
       "#type" => "actions",
     ];
 
-    $form["repositories"]["actions"]["add_name"] = [
+    $form["projects"]["actions"]["add_name"] = [
       "#type" => "submit",
-      "#value" => $this->t("Add repository"),
+      "#value" => $this->t("Add project"),
       "#submit" => ["::addOne"],
       "#ajax" => [
         "callback" => "::addmoreCallback",
-        "wrapper" => "names-fieldset-wrapper",
+        "wrapper" => "vercel-fieldset-wrapper",
       ],
     ];
 
@@ -277,7 +238,7 @@ class SettingsForm extends ConfigFormBase
    */
   public function addmoreCallback(array &$form, FormStateInterface $form_state)
   {
-    return $form["repositories"];
+    return $form["projects"];
   }
 
   /**
@@ -309,80 +270,75 @@ class SettingsForm extends ConfigFormBase
   {
     $row_count = $form_state->get("row_count");
 
-    $repos = [];
+    $projects = [];
 
     for ($row_no = 0; $row_no < $row_count; $row_no++) {
       $is_active_row = $form_state->get("row_" . $row_no . "_active");
       if ($is_active_row) {
-        $current_repo = [
+        $current_project = [
           "label" => $form_state->getValue([
-            "repositories",
-            "repo" . $row_no,
+            "projects",
+            "project" . $row_no,
             $row_no,
             "label",
           ]) ?? "",
-          "owner" => $form_state->getValue([
-            "repositories",
-            "repo" . $row_no,
+          "project_id" => $form_state->getValue([
+            "projects",
+            "project" . $row_no,
             $row_no,
-            "owner",
-          ]),
-          "repo" => $form_state->getValue([
-            "repositories",
-            "repo" . $row_no,
-            $row_no,
-            "repo",
-          ]),
-          "event_type" => $form_state->getValue([
-            "repositories",
-            "repo" . $row_no,
-            $row_no,
-            "event_type",
-          ]),
-          "workflow_file" => $form_state->getValue([
-            "repositories",
-            "repo" . $row_no,
-            $row_no,
-            "workflow_file",
+            "project_id",
           ]) ?? "",
         ];
 
         // Save token source and key ID.
         $token_source = $form_state->getValue([
-          "repositories",
-          "repo" . $row_no,
+          "projects",
+          "project" . $row_no,
           $row_no,
           "token_source",
         ]);
-        $current_repo["token_source"] = $token_source ?? "manual";
-        $current_repo["token_key"] = $form_state->getValue([
-          "repositories",
-          "repo" . $row_no,
+        $current_project["token_source"] = $token_source ?? "manual";
+        $current_project["token_key"] = $form_state->getValue([
+          "projects",
+          "project" . $row_no,
           $row_no,
           "token_key",
         ]) ?? "";
 
-        // Handle manual token — keep existing if blank.
-        $github_token = $form_state->getValue([
-          "repositories",
-          "repo" . $row_no,
+        // Handle Deploy Hook URL — keep existing if blank.
+        $deploy_hook_url = $form_state->getValue([
+          "projects",
+          "project" . $row_no,
           $row_no,
-          "github_token",
+          "deploy_hook_url",
         ]);
-
-        if (!empty($github_token)) {
-          $current_repo["github_token"] = $github_token;
+        if (!empty($deploy_hook_url)) {
+          $current_project["deploy_hook_url"] = $deploy_hook_url;
         } else {
-          $existing_config = $this->config('deploy_trigger.settings')->get('repositories');
-          $current_repo["github_token"] = $existing_config[$row_no]["github_token"] ?? "";
+          $existing_config = $this->config('deploy_trigger.settings')->get('vercel_projects');
+          $current_project["deploy_hook_url"] = $existing_config[$row_no]["deploy_hook_url"] ?? "";
         }
 
-        $repos[] = $current_repo;
+        // Handle Vercel token — keep existing if blank.
+        $vercel_token = $form_state->getValue([
+          "projects",
+          "project" . $row_no,
+          $row_no,
+          "vercel_token",
+        ]);
+        if (!empty($vercel_token)) {
+          $current_project["vercel_token"] = $vercel_token;
+        } else {
+          $existing_config = $this->config('deploy_trigger.settings')->get('vercel_projects');
+          $current_project["vercel_token"] = $existing_config[$row_no]["vercel_token"] ?? "";
+        }
+
+        $projects[] = $current_project;
       }
     }
 
     $this->config("deploy_trigger.settings")
-      ->set("repositories", $repos)
+      ->set("vercel_projects", $projects)
       ->save();
 
     parent::submitForm($form, $form_state);

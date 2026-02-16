@@ -1,0 +1,6 @@
+deploy_trigger.admin:
+  title: 'Deploy Trigger'
+  route_name: deploy_trigger.trigger
+  description: 'Trigger deployments on GitHub Actions and Vercel.'
+  parent: system.admin_config_services
+  weight: 100

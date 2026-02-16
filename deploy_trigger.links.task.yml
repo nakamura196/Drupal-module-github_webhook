@@ -1,0 +1,23 @@
+deploy_trigger.trigger_tab:
+  route_name: deploy_trigger.trigger
+  title: 'Trigger'
+  base_route: deploy_trigger.trigger
+  weight: 0
+
+deploy_trigger.repositories_tab:
+  route_name: deploy_trigger.repositories
+  title: 'GitHub Repositories'
+  base_route: deploy_trigger.trigger
+  weight: 1
+
+deploy_trigger.vercel_projects_tab:
+  route_name: deploy_trigger.vercel_projects
+  title: 'Vercel Projects'
+  base_route: deploy_trigger.trigger
+  weight: 2
+
+deploy_trigger.auto_trigger_tab:
+  route_name: deploy_trigger.auto_trigger
+  title: 'Auto Trigger'
+  base_route: deploy_trigger.trigger
+  weight: 3

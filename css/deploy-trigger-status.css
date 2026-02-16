@@ -1,21 +1,21 @@
-.github-webhook-status {
+.deploy-trigger-status {
   margin-top: 2em;
 }
 
-.github-webhook-runs {
+.deploy-trigger-runs {
   width: 100%;
   border-collapse: collapse;
   margin-top: 0.5em;
 }
 
-.github-webhook-runs th,
-.github-webhook-runs td {
+.deploy-trigger-runs th,
+.deploy-trigger-runs td {
   padding: 8px 12px;
   text-align: left;
   border-bottom: 1px solid #d3d8de;
 }
 
-.github-webhook-runs th {
+.deploy-trigger-runs th {
   font-weight: 600;
   color: #555;
   font-size: 0.9em;
@@ -36,7 +36,7 @@
 
 .run-in-progress .status-indicator {
   background-color: #0366d6;
-  animation: github-webhook-pulse 1.5s ease-in-out infinite;
+  animation: deploy-trigger-pulse 1.5s ease-in-out infinite;
 }
 
 .run-success .status-indicator {
@@ -55,27 +55,27 @@
   background-color: #959da5;
 }
 
-.github-webhook-runs a {
+.deploy-trigger-runs a {
   text-decoration: none;
   color: inherit;
 }
 
-.github-webhook-runs a:hover {
+.deploy-trigger-runs a:hover {
   text-decoration: underline;
 }
 
-.github-webhook-cancel-btn {
+.deploy-trigger-cancel-btn {
   padding: 2px 10px;
   font-size: 0.85em;
   cursor: pointer;
 }
 
-.github-webhook-cancel-btn:disabled {
+.deploy-trigger-cancel-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-@keyframes github-webhook-pulse {
+@keyframes deploy-trigger-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
 }

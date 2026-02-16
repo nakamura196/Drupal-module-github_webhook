@@ -2,3 +2,5 @@ repositories: []
 auto_trigger_enabled: false
 auto_trigger_content_types: []
 auto_trigger_repositories: []
+vercel_projects: []
+auto_trigger_vercel_projects: []

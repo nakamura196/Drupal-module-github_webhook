@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\github_webhook\Form;
+namespace Drupal\deploy_trigger\Form;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\TypedConfigManagerInterface;
@@ -24,6 +24,8 @@ class AutoTriggerForm extends ConfigFormBase
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory.
+   * @param \Drupal\Core\Config\TypedConfigManagerInterface $typed_config_manager
+   *   The typed config manager.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
    */
@@ -48,7 +50,7 @@ class AutoTriggerForm extends ConfigFormBase
    */
   public function getFormId()
   {
-    return "github_webhook_auto_trigger";
+    return "deploy_trigger_auto_trigger";
   }
 
   /**
@@ -56,7 +58,7 @@ class AutoTriggerForm extends ConfigFormBase
    */
   protected function getEditableConfigNames()
   {
-    return ["github_webhook.settings"];
+    return ["deploy_trigger.settings"];
   }
 
   /**
@@ -64,14 +66,15 @@ class AutoTriggerForm extends ConfigFormBase
    */
   public function buildForm(array $form, FormStateInterface $form_state)
   {
-    $config = $this->config("github_webhook.settings");
+    $config = $this->config("deploy_trigger.settings");
     $repos = $config->get("repositories") ?? [];
+    $vercel_projects = $config->get("vercel_projects") ?? [];
 
     $form["auto_trigger_enabled"] = [
       "#type" => "checkbox",
       "#title" => $this->t("Enable Auto Trigger"),
       "#default_value" => $config->get("auto_trigger_enabled") ?? FALSE,
-      "#description" => $this->t("Automatically trigger webhooks when content is saved."),
+      "#description" => $this->t("Automatically trigger deploys when content is saved."),
     ];
 
     // Content type checkboxes.
@@ -88,10 +91,10 @@ class AutoTriggerForm extends ConfigFormBase
       "#title" => $this->t("Content Types"),
       "#options" => $content_type_options,
       "#default_value" => $config->get("auto_trigger_content_types") ?? [],
-      "#description" => $this->t("Select content types that will trigger webhooks on save."),
+      "#description" => $this->t("Select content types that will trigger deploys on save."),
     ];
 
-    // Repository checkboxes.
+    // GitHub repository checkboxes.
     $repo_options = [];
     foreach ($repos as $key => $repo) {
       $repo_options[$key] = !empty($repo["label"]) ? $repo["label"] : $repo["owner"] . "/" . $repo["repo"];
@@ -99,18 +102,40 @@ class AutoTriggerForm extends ConfigFormBase
 
     if (empty($repo_options)) {
       $form["no_repos"] = [
-        "#markup" => '<p>' . $this->t('No repositories configured. <a href=":url">Add repositories</a> first.', [
-          ':url' => Url::fromRoute('github_webhook.trigger')->toString(),
+        "#markup" => '<p>' . $this->t('No GitHub repositories configured. <a href=":url">Add repositories</a> first.', [
+          ':url' => Url::fromRoute('deploy_trigger.repositories')->toString(),
         ]) . '</p>',
       ];
     }
 
     $form["auto_trigger_repositories"] = [
       "#type" => "checkboxes",
-      "#title" => $this->t("Repositories"),
+      "#title" => $this->t("GitHub Repositories"),
       "#options" => $repo_options,
       "#default_value" => array_map('strval', $config->get("auto_trigger_repositories") ?? []),
-      "#description" => $this->t("Select repositories to trigger when content is saved."),
+      "#description" => $this->t("Select GitHub repositories to trigger when content is saved."),
+    ];
+
+    // Vercel project checkboxes.
+    $vercel_options = [];
+    foreach ($vercel_projects as $key => $project) {
+      $vercel_options[$key] = !empty($project["label"]) ? $project["label"] : ('Vercel project ' . $key);
+    }
+
+    if (empty($vercel_options)) {
+      $form["no_vercel"] = [
+        "#markup" => '<p>' . $this->t('No Vercel projects configured. <a href=":url">Add projects</a> first.', [
+          ':url' => Url::fromRoute('deploy_trigger.vercel_projects')->toString(),
+        ]) . '</p>',
+      ];
+    }
+
+    $form["auto_trigger_vercel_projects"] = [
+      "#type" => "checkboxes",
+      "#title" => $this->t("Vercel Projects"),
+      "#options" => $vercel_options,
+      "#default_value" => array_map('strval', $config->get("auto_trigger_vercel_projects") ?? []),
+      "#description" => $this->t("Select Vercel projects to trigger when content is saved."),
     ];
 
     return parent::buildForm($form, $form_state);
@@ -128,11 +153,16 @@ class AutoTriggerForm extends ConfigFormBase
       $form_state->getValue("auto_trigger_repositories") ?? [],
       function ($v) { return $v !== 0 && $v !== '0' && !empty($v); }
     )));
+    $auto_trigger_vercel_projects = array_values(array_map('intval', array_filter(
+      $form_state->getValue("auto_trigger_vercel_projects") ?? [],
+      function ($v) { return $v !== 0 && $v !== '0' && !empty($v); }
+    )));
 
-    $this->config("github_webhook.settings")
+    $this->config("deploy_trigger.settings")
       ->set("auto_trigger_enabled", (bool) $form_state->getValue("auto_trigger_enabled"))
       ->set("auto_trigger_content_types", $auto_trigger_content_types)
       ->set("auto_trigger_repositories", $auto_trigger_repositories)
+      ->set("auto_trigger_vercel_projects", $auto_trigger_vercel_projects)
       ->save();
 
     parent::submitForm($form, $form_state);

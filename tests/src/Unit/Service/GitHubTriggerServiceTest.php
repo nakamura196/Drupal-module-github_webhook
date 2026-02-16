@@ -1,11 +1,11 @@
 <?php
 
-namespace Drupal\Tests\github_webhook\Unit\Service;
+namespace Drupal\Tests\deploy_trigger\Unit\Service;
 
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
-use Drupal\github_webhook\Service\WebhookTriggerService;
+use Drupal\deploy_trigger\Service\GitHubTriggerService;
 use Drupal\Tests\UnitTestCase;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
@@ -16,10 +16,10 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 
 /**
- * @coversDefaultClass \Drupal\github_webhook\Service\WebhookTriggerService
- * @group github_webhook
+ * @coversDefaultClass \Drupal\deploy_trigger\Service\GitHubTriggerService
+ * @group deploy_trigger
  */
-class WebhookTriggerServiceTest extends UnitTestCase {
+class GitHubTriggerServiceTest extends UnitTestCase {
 
   /**
    * The mocked HTTP client.
@@ -52,7 +52,7 @@ class WebhookTriggerServiceTest extends UnitTestCase {
   /**
    * The service under test.
    *
-   * @var \Drupal\github_webhook\Service\WebhookTriggerService
+   * @var \Drupal\deploy_trigger\Service\GitHubTriggerService
    */
   protected $service;
 
@@ -75,10 +75,10 @@ class WebhookTriggerServiceTest extends UnitTestCase {
     $this->moduleHandler = $this->createMock(ModuleHandlerInterface::class);
 
     $this->loggerFactory->method('get')
-      ->with('github_webhook')
+      ->with('deploy_trigger')
       ->willReturn($this->logger);
 
-    $this->service = new WebhookTriggerService(
+    $this->service = new GitHubTriggerService(
       $this->httpClient,
       $this->loggerFactory,
       $this->moduleHandler,
@@ -298,7 +298,7 @@ class WebhookTriggerServiceTest extends UnitTestCase {
       }
     };
 
-    $service = new WebhookTriggerService(
+    $service = new GitHubTriggerService(
       $this->httpClient,
       $this->loggerFactory,
       $this->moduleHandler,
@@ -327,7 +327,7 @@ class WebhookTriggerServiceTest extends UnitTestCase {
       }
     };
 
-    $service = new WebhookTriggerService(
+    $service = new GitHubTriggerService(
       $this->httpClient,
       $this->loggerFactory,
       $this->moduleHandler,
@@ -373,7 +373,7 @@ class WebhookTriggerServiceTest extends UnitTestCase {
       }
     };
 
-    $service = new WebhookTriggerService(
+    $service = new GitHubTriggerService(
       $this->httpClient,
       $this->loggerFactory,
       $this->moduleHandler,

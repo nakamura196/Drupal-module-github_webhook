@@ -1,0 +1,16 @@
+services:
+  deploy_trigger.github_trigger:
+    class: Drupal\deploy_trigger\Service\GitHubTriggerService
+    arguments:
+      - '@http_client'
+      - '@logger.factory'
+      - '@module_handler'
+      - '@?key.repository'
+
+  deploy_trigger.vercel_trigger:
+    class: Drupal\deploy_trigger\Service\VercelTriggerService
+    arguments:
+      - '@http_client'
+      - '@logger.factory'
+      - '@module_handler'
+      - '@?key.repository'

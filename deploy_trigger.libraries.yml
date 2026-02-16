@@ -1,9 +1,9 @@
 status:
   js:
-    js/github-webhook-status.js: {}
+    js/deploy-trigger-status.js: {}
   css:
     component:
-      css/github-webhook-status.css: {}
+      css/deploy-trigger-status.css: {}
   dependencies:
     - core/drupal
     - core/drupalSettings

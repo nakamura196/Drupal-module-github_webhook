@@ -1,6 +1,0 @@
-github_webhook.admin:
-  title: 'GitHub Webhook'
-  route_name: github_webhook.trigger
-  description: 'Trigger GitHub repository_dispatch webhooks.'
-  parent: system.admin_config_services
-  weight: 100

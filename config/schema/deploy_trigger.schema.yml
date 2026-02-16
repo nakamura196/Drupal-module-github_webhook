@@ -1,6 +1,6 @@
-github_webhook.settings:
+deploy_trigger.settings:
   type: config_object
-  label: 'GitHub Webhook settings'
+  label: 'Deploy Trigger settings'
   mapping:
     repositories:
       type: sequence
@@ -48,3 +48,34 @@ github_webhook.settings:
       sequence:
         type: integer
         label: 'Repository index'
+    vercel_projects:
+      type: sequence
+      label: 'Vercel projects'
+      sequence:
+        type: mapping
+        label: 'Vercel project'
+        mapping:
+          label:
+            type: string
+            label: 'Label'
+          deploy_hook_url:
+            type: string
+            label: 'Deploy Hook URL'
+          project_id:
+            type: string
+            label: 'Vercel project ID'
+          token_source:
+            type: string
+            label: 'Token source'
+          vercel_token:
+            type: string
+            label: 'Vercel API token'
+          token_key:
+            type: string
+            label: 'Key module key ID'
+    auto_trigger_vercel_projects:
+      type: sequence
+      label: 'Auto trigger Vercel projects'
+      sequence:
+        type: integer
+        label: 'Project index'

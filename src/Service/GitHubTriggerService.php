@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\github_webhook\Service;
+namespace Drupal\deploy_trigger\Service;
 
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
@@ -13,7 +13,7 @@ use GuzzleHttp\Exception\GuzzleException;
 /**
  * Service for triggering GitHub repository_dispatch webhooks.
  */
-class WebhookTriggerService {
+class GitHubTriggerService {
 
   /**
    * The HTTP client.
@@ -44,7 +44,7 @@ class WebhookTriggerService {
   protected $keyRepository;
 
   /**
-   * Constructs a WebhookTriggerService object.
+   * Constructs a GitHubTriggerService object.
    *
    * @param \GuzzleHttp\ClientInterface $http_client
    *   The HTTP client.
@@ -62,7 +62,7 @@ class WebhookTriggerService {
     $key_repository = NULL,
   ) {
     $this->httpClient = $http_client;
-    $this->logger = $logger_factory->get('github_webhook');
+    $this->logger = $logger_factory->get('deploy_trigger');
     $this->moduleHandler = $module_handler;
     $this->keyRepository = $key_repository;
   }

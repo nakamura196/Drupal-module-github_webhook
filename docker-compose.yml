@@ -4,7 +4,7 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - .:/opt/drupal/web/modules/custom/github_webhook
+      - .:/opt/drupal/web/modules/custom/deploy_trigger
       - drupal_data:/opt/drupal/web/sites/default/files
     depends_on:
       db:
