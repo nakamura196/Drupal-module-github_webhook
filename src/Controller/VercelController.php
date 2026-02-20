@@ -127,7 +127,7 @@ class VercelController extends ControllerBase
       $formatted[] = [
         'id' => $deployment['uid'] ?? $deployment['id'] ?? '',
         'state' => $deployment['state'] ?? $deployment['readyState'] ?? 'UNKNOWN',
-        'created_at' => date('c', ($deployment['createdAt'] ?? 0) / 1000),
+        'created_at' => date('c', intdiv($deployment['createdAt'] ?? 0, 1000)),
         'url' => !empty($deployment['url']) ? 'https://' . $deployment['url'] : '',
       ];
     }
