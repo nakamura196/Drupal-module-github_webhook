@@ -17,6 +17,8 @@ function deploy_trigger_locale_translation_projects_alter(&$projects) {
   $module_handler = \Drupal::service('module_handler');
   $module_path = $module_handler->getModule('deploy_trigger')->getPath();
   $projects['deploy_trigger'] = [
+    // Drupal 11.4 requires the project type (LocaleTranslatableProject is strictly typed).
+    'project_type' => 'module',
     'info' => [
       'interface translation project' => 'deploy_trigger',
       'interface translation server pattern' => $module_path . '/translations/%language.po',
